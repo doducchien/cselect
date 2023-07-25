@@ -2,8 +2,8 @@ export interface COption{
     label: string,
     value: string,
     level: number,
-    expand?: boolean,
+    show?: boolean,
     selected?:boolean,
     childOptions: COption[],
-    uuid: string
+    uuid: string,
 }

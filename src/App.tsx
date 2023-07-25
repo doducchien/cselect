@@ -28,7 +28,7 @@ const cOption: COption[] = [
     label: 'A',
     value: 'A',
     level: 0,
-    expand: true,
+    show: true,
     childOptions: [
       
       {
@@ -36,14 +36,14 @@ const cOption: COption[] = [
         label: 'A1',
         value: 'A1',
         level: 1,
-        expand: true,
+        show: false,
         childOptions: [
           {
             uuid: generateUUID(),
             label: 'A11',
             value: 'A11',
             level: 2,
-            expand: true,
+            show: false,
             childOptions: []
           },
           {
@@ -51,7 +51,7 @@ const cOption: COption[] = [
             label: 'A12',
             value: 'A12',
             level: 2,
-            expand: true,
+            show: false,
             childOptions: []
           },
         ]
@@ -61,7 +61,7 @@ const cOption: COption[] = [
         label: 'A2',
         value: 'A2',
         level: 1,
-        expand: true,
+        show: false,
         childOptions: []
       },
     ]
@@ -70,7 +70,7 @@ const cOption: COption[] = [
     label: 'B',
     value: 'B',
     level: 0,
-    expand: true,
+    show: true,
     uuid: generateUUID(),
 
     childOptions: [
@@ -79,7 +79,7 @@ const cOption: COption[] = [
         label: 'B1',
         value: 'B1',
         level: 1,
-        expand: true,
+        show: false,
 
         childOptions: [
           {
@@ -87,7 +87,7 @@ const cOption: COption[] = [
             label: 'B11',
             value: 'B11',
             level: 2,
-            expand: true,
+            show: false,
             childOptions: []
           },
           {
@@ -95,7 +95,7 @@ const cOption: COption[] = [
             label: 'B12',
             value: 'B12',
             level: 2,
-            expand: true,
+            show: false,
             childOptions: []
           },
         ]
@@ -105,7 +105,7 @@ const cOption: COption[] = [
         label: 'B2',
         value: 'B2',
         level: 1,
-        expand: true,
+        show: false,
 
         childOptions: []
       }
@@ -134,7 +134,7 @@ function App() {
 
   return (
     <div className="App">
-      <CSelect options={cOption}/>
+      <CSelect options={cOption} width={500}/>
     </div>
   );
 }
