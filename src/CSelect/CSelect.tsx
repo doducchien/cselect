@@ -1,15 +1,18 @@
-import React, { ReactElement, ReactNode, useEffect, useState } from 'react'
+import React, { ReactElement, ReactNode, useEffect, useRef, useState } from 'react'
 import './cselect.scss'
 import { COption } from './model/COption'
-import { JSX } from 'react/jsx-runtime'
 import { cloneDeep, divide } from 'lodash'
-import ArrowDown from '../img/arrow-down.svg'
-import XClose from '../img/x-close.svg'
+import ArrowDown from './img/arrow-down.svg'
+import XClose from './img/x-close.svg'
+import { checkAtLeastOneOptionWasSelected, expandOrCollapseOptions, getCurrentNode, getPairSelected, getPathOfOptionSelected, getRest, selectOrUnSelectAll, selectOrUnselectAllParentNode, selectedOrUnselectedAll } from './func/functions'
+import { useClickOutside } from '@mantine/hooks'
 
 interface CSelectProps {
     options: COption[]
     width?: number,
-    height?: number
+    height?: number,
+    optionsAreaMaxHeight?: number,
+    onChange: (options: COption[]) => void
 }
 
 
@@ -17,48 +20,7 @@ interface CSelectProps {
 
 
 
-function getPathOfOptionSelected(options: COption[], uuid: string) {
 
-
-    let result: string[] = [];
-    let success = false;
-    function trace(options: COption[]) {
-
-        let i = 0;
-        for (i = 0; i < options.length; i++) {
-            if (success) break;
-            const currentOption = options[i];
-            const { value, uuid: currentUuid } = currentOption;
-
-            result.push(value)
-
-            if (currentOption.childOptions.length === 0) {
-                if (currentUuid === uuid) {
-                    success = true;
-                    return;
-                }
-                result.pop()
-                continue;
-            }
-
-            if (currentUuid === uuid) {
-                success = true;
-                return;
-            }
-
-
-            trace(currentOption.childOptions)
-
-        }
-        if (i === options.length && !success) {
-            result.pop();
-        }
-
-
-    }
-    trace(options);
-    return result;
-}
 
 
 
@@ -81,7 +43,7 @@ function genderListOption(options: COption[], onClickOption: (uuid: string) => v
                     data-value={value}
                     data-uuid={uuid}
                 >
-                    <label className="container">
+                    <label className="containers">
                         <input type="checkbox" disabled checked={selected || false} />
                         <span className="checkmark" onClick={() => onClickOption((uuid))}></span>
                     </label>
@@ -107,7 +69,7 @@ function genderListOption(options: COption[], onClickOption: (uuid: string) => v
                         data-uuid={uuid}
 
                     >
-                        <label className="container">
+                        <label className="containers">
                             <input type="checkbox" disabled checked={selected || false} />
                             <span className="checkmark" onClick={() => onClickOption((uuid))}></span>
                         </label>
@@ -138,138 +100,18 @@ export default function CSelect(props: CSelectProps) {
     const [optionsState, setOptionsState] = useState<COption[]>(options);
     const [selected, setSelected] = useState<boolean>(false);
     const [pairs, setPairs] = useState<string[][]>([]);
+    const [isOpenList, setIsOpenList] = useState<boolean>(false);
+    const ref = useClickOutside(()=> setIsOpenList(false));
 
+  
+    useEffect(()=>{
+        setOptionsState(options);
+    }, [options])
 
     useEffect(() => {
         const atLeastOneOptionWasSelected = checkAtLeastOneOptionWasSelected(optionsState);
         setSelected(atLeastOneOptionWasSelected);
     }, [optionsState])
-
-
-
-    function getCurrentNode(options: COption[], paths: string[]): COption | null {
-        let optionsCopy = options;
-        for (let i = 0; i < paths.length - 1; i++) {
-            const path = paths[i]
-            let currentOptionsIndex = optionsCopy.findIndex(item => item.value === path);
-            if (currentOptionsIndex === -1) return null;
-            optionsCopy = optionsCopy[currentOptionsIndex].childOptions;
-
-        }
-        let lastPath = paths[paths.length - 1];
-        let result = optionsCopy.find(item => item.value === lastPath) || null;
-        return result;
-    }
-
-
-    function getRest(options: COption[], paths: string[]): COption[] {
-        let rest = options;
-        for (let i = 0; i < paths.length; i++) {
-            const path = paths[i]
-            let currentOptionsIndex = rest.findIndex(item => item.value === path);
-            if (currentOptionsIndex === -1) return [];
-            rest = rest[currentOptionsIndex].childOptions;
-
-        }
-        return rest;
-    }
-
-    function getParentNode(options: COption[], paths: string[]): COption | null {
-        let newPath = cloneDeep(paths);
-        newPath.pop();
-        const result = getCurrentNode(options, newPath);
-        return result;
-    }
-
-    function expandOrCollapseOptions(options: COption[], selected: boolean): void {
-        for (let i = 0; i < options.length; i++) {
-            options[i].show = selected;
-            if (options[i].childOptions.length === 0) continue;
-            expandOrCollapseOptions(options[i].childOptions, selected)
-        }
-    }
-
-
-
-
-
-
-    function selectedOrUnselectedAll(options: COption[], selected: boolean): void {
-        for (let i = 0; i < options.length; i++) {
-            options[i].selected = selected;
-            selectedOrUnselectedAll(options[i].childOptions, selected);
-        }
-    }
-
-    function selectOrUnselectAllParentNode(options: COption[], paths: string[]): void {
-        const pathsClone = [...paths];
-        while (pathsClone.length > 0) {
-            let parentNode = getParentNode(options, pathsClone);
-            if (!parentNode) return;
-            if (parentNode?.childOptions.some(item => item.selected)) parentNode.selected = true;
-            else parentNode.selected = false;
-            pathsClone.pop();
-        }
-
-    }
-
-    function expandOrCollapseChildren(options: COption[], paths: string[]): void {
-        let currentNode = getCurrentNode(options, paths);
-        let rest = getRest(options, paths);
-        let isExpand = currentNode?.childOptions.every(item => item.show);
-        currentNode?.childOptions.map(item => {
-            item.show = !isExpand;
-            return item;
-        })
-    }
-
-    function selectOrUnSelectAll(options: COption[], selected: boolean) {
-        for (let i = 0; i < options.length; i++) {
-            options[i].selected = selected;
-            if (options[i].childOptions.length === 0) continue;
-            selectOrUnSelectAll(options[i].childOptions, selected);
-        }
-    }
-
-    function checkAtLeastOneOptionWasSelected(options: COption[]): boolean {
-        for (let i = 0; i < options.length; i++) {
-            const currentOption = options[i];
-            if (currentOption.selected) return true;
-            if (currentOption.childOptions.length === 0) continue;
-            checkAtLeastOneOptionWasSelected(currentOption.childOptions)
-        }
-        return false;
-    }
-
-    function getPairSelected(options: COption[]): string[][] {
-        let result: string[][] = [];
-        let path: string[] = []
-        loopSelected(options);
-        function loopSelected(options: COption[]) {
-            // debugger
-            for (let i = 0; i < options.length; i++) {
-                const currentOptions = options[i];
-                const { value, selected, childOptions } = currentOptions;
-                if (!selected) continue;
-
-                path.push(value);
-                if (childOptions.length === 0) {
-                    result.push([...path]);
-                    path.pop();
-                    continue;
-                }
-
-                loopSelected(currentOptions.childOptions);
-                path.pop();
-            }
-        }
-
-        return result;
-
-    }
-
-
-
 
 
     const onExpandCollapse = (uuid: string) => {
@@ -308,6 +150,8 @@ export default function CSelect(props: CSelectProps) {
         selectOrUnselectAllParentNode(optionsClone, paths)
         setPairs(getPairSelected(optionsClone));
         setOptionsState(optionsClone);
+        props.onChange(optionsClone);
+
 
     }
 
@@ -317,6 +161,8 @@ export default function CSelect(props: CSelectProps) {
         selectOrUnSelectAll(optionsClone, true);
         setPairs(getPairSelected(optionsClone))
         setOptionsState(optionsClone)
+        props.onChange(optionsClone);
+
     }
     const onUnselectAll = () => {
         const optionsClone = cloneDeep(optionsState);
@@ -324,22 +170,29 @@ export default function CSelect(props: CSelectProps) {
         selectOrUnSelectAll(optionsClone, false);
         setPairs(getPairSelected(optionsClone))
         setOptionsState(optionsClone)
+        props.onChange(optionsClone);
+
     }
 
     const onDiscardPair = (paths: string[]) => {
 
 
         const optionsClone = cloneDeep(optionsState);
+        let newPath = [...paths].map(item =>{
+            let [uuid] = item.split(';');
+            return uuid;
+        })
 
 
-        let currentNode = getCurrentNode(optionsClone, paths);
+        let currentNode = getCurrentNode(optionsClone, newPath);
         if (!currentNode) return;
 
         currentNode.selected = false;
-        selectedOrUnselectedAll(getRest(optionsClone, paths), false)
-        selectOrUnselectAllParentNode(optionsClone, paths)
+        selectedOrUnselectedAll(getRest(optionsClone, newPath), false)
+        selectOrUnselectAllParentNode(optionsClone, newPath)
         setPairs(getPairSelected(optionsClone));
         setOptionsState(optionsClone);
+        props.onChange(optionsClone);
 
 
 
@@ -353,6 +206,7 @@ export default function CSelect(props: CSelectProps) {
             const pair = pairs[i];
 
             for (let j = 0; j < pair.length; j++) {
+                const [uuid, label, value] = pair[j].split(';');
                 let style;
                 if (j % 2 === 0) style = {
                     backgroundColor: '#88A9EC',
@@ -362,11 +216,10 @@ export default function CSelect(props: CSelectProps) {
                     backgroundColor: 'white',
                     color: '#4F6CA7'
                 }
-                const text = pair[j];
-                result.push(<span className='tag' style={style}>{`${text}`}</span>)
+                result.push(<span key={j} className='tag' style={style}>{`${label}`}</span>)
             }
             let element = (
-                <div className='element'>
+                <div className='element' key={i}>
                     {result}
                     <span className='discard'><img src={XClose} alt="" onClick={()=>onDiscardPair(pair)} /></span>
                 </div>
@@ -376,6 +229,8 @@ export default function CSelect(props: CSelectProps) {
 
         return results;
     }
+
+
     // getParentNode(options, ['B', 'B1', 'B12'])
     // getCurrentNode(options, ['A', 'A1'])
     // selectedRest(options, ['A', 'A1'])
@@ -385,12 +240,17 @@ export default function CSelect(props: CSelectProps) {
 
 
     return (
-        <div className='cselect' style={{ width: props.width, height: props.height }}>
-            <div className="result">
+        <div 
+        className='cselect'
+         style={{ width: props.width, height: props.height }}
+        onClick={()=> setIsOpenList(true)}
+         ref={ref} 
+         >
+            <div className="result c-select" ref={ref}>
                 {pairsToUI(pairs, onDiscardPair)}
             </div>
 
-            <div className='options'>
+            <div className='options' style={{display: isOpenList ? 'block': 'none'}}>
                 <div>
                     <label className="select-all">
                         <input type="checkbox" disabled checked={selected} />
@@ -398,7 +258,7 @@ export default function CSelect(props: CSelectProps) {
                     </label>
                 </div>
                 <div className='line'></div>
-                <div className='list-options'>
+                <div className='list-options' style={{maxHeight: props?.optionsAreaMaxHeight, overflow: 'auto'}}>
                     {genderListOption(optionsState, onClickOption, onExpandCollapse)}
                 </div>
 

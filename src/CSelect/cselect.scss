@@ -1,13 +1,21 @@
 .cselect {
+
     width: 300px;
+    min-height: 50px;
+    background-color: white;
+    cursor: pointer;
+    // position: relative;
+
 
     .result {
+
         height: 50px;
         border: 1px solid #1a95e7;
         text-align: left;
         padding: 5px;
         border-radius: 5px;
         overflow-y: auto;
+        background-color: white;
 
     }
     .options {
@@ -81,18 +89,19 @@
         cursor: pointer;
         padding: 5px;
         margin-bottom: 10px;
-        background-color: white;
+        background-color: transparent;
         .label {
             width: 100%;
             display: flex;
             justify-content: space-between;
+            background-color: transparent;
             img {
                 width: 10px;
             }
         }
     }
     
-    .container {
+    .containers {
         display: block;
         align-items: center;
         position: relative;
@@ -103,10 +112,11 @@
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+        background-color: transparent;
     }
     
     /* Hide the browser's default checkbox */
-    .container input {
+    .containers input {
         position: absolute;
         opacity: 0;
         cursor: pointer;
@@ -127,12 +137,12 @@
     }
     
     /* On mouse-over, add a grey background color */
-    //   .container:hover input ~ .checkmark {
+    //   .containers:hover input ~ .checkmark {
     //     background-color: #ccc;
     //   }
     
     /* When the checkbox is checked, add a blue background */
-    .container input:checked ~ .checkmark {
+    .containers input:checked ~ .checkmark {
         background-color: #2196f3;
     }
     
@@ -144,12 +154,12 @@
     }
     
     /* Show the checkmark when checked */
-    .container input:checked ~ .checkmark:after {
+    .containers input:checked ~ .checkmark:after {
         display: block;
     }
     
     /* Style the checkmark/indicator */
-    .container .checkmark:after {
+    .containers .checkmark:after {
         left: 7px;
         top: 2px;
         width: 4px;
